@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace FanControl.Liquidctl
 {
@@ -18,14 +19,14 @@ namespace FanControl.Liquidctl
             Process process = LiquidctlCall($"--json status");
             return JsonConvert.DeserializeObject<List<LiquidctlStatusJSON>>(process.StandardOutput.ReadToEnd());
         }
-        internal static List<LiquidctlStatusJSON> ReadStatus(string address)
+        internal static List<LiquidctlStatusJSON> ReadStatus(string deviceDescription)
         {
-            Process process = LiquidctlCall($"--json --address {address} status");
+            Process process = LiquidctlCall($"--json --match {deviceDescription} status");
             return JsonConvert.DeserializeObject<List<LiquidctlStatusJSON>>(process.StandardOutput.ReadToEnd());
         }
-        internal static void SetPump(string address, int value)
+        internal static void SetPump(string deviceDescription, int value)
         {
-            LiquidctlCall($"--address {address} set pump speed {(value)}");
+            LiquidctlCall($"--match {deviceDescription} set pump speed {(value)}");
         }
 
         private static Process LiquidctlCall(string arguments)

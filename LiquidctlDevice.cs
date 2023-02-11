@@ -16,7 +16,7 @@ namespace FanControl.Liquidctl
             }
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                _value = (float)output.status.Single(entry => entry.key == "Liquid temperature").value;
+                _value = (float)Convert.ToSingle(output.status.Single(entry => entry.key == "Liquid temperature").value);
             }
             public string Id => _id;
             string _id;
@@ -40,7 +40,7 @@ namespace FanControl.Liquidctl
             }
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                _value = (float)output.status.Single(entry => entry.key == "Pump speed").value;
+                _value = (float)Convert.ToSingle(output.status.Single(entry => entry.key == "Pump speed").value);
             }
             public string Id => _id;
             readonly string _id;
@@ -60,16 +60,18 @@ namespace FanControl.Liquidctl
             {
                 _address = output.address;
                 _id = $"{_address}-pumpduty";
+                _deviceDescription = $"\"{output.description}\"";
                 _name = $"Pump Control - {output.description}";
                 UpdateFromJSON(output);
             }
             public void UpdateFromJSON(LiquidctlStatusJSON output)
             {
-                _value = (float)output.status.Single(entry => entry.key == "Pump duty").value;
+                _value = (float)Convert.ToSingle(output.status.Single(entry => entry.key == "Pump duty").value);
             }
             public string Id => _id;
             string _id;
             string _address;
+            string _deviceDescription;
 
             public string Name => _name;
             string _name;
@@ -84,7 +86,7 @@ namespace FanControl.Liquidctl
 
             public void Set(float val)
             {
-                LiquidctlCLIWrapper.SetPump(_address, (int) val);
+                LiquidctlCLIWrapper.SetPump(_deviceDescription, (int) val);
             }
 
             public void Update()
@@ -94,6 +96,7 @@ namespace FanControl.Liquidctl
         public LiquidctlDevice(LiquidctlStatusJSON output)
         {
             address = output.address;
+            deviceDescription = $"\"{output.description}\"";
 
             hasPumpSpeed = output.status.Exists(entry => entry.key == "Pump speed" && !(entry.value is null));
             if (hasPumpSpeed)
@@ -117,6 +120,7 @@ namespace FanControl.Liquidctl
             if (hasPumpDuty) pumpDuty.UpdateFromJSON(output);
         }
 
+        public string deviceDescription;
         public string address;
         public LiquidTemperature liquidTemperature;
         public PumpSpeed pumpSpeed;
@@ -126,12 +130,12 @@ namespace FanControl.Liquidctl
         {
             try
             {
-                LiquidctlStatusJSON output = LiquidctlCLIWrapper.ReadStatus(address).First();
+                LiquidctlStatusJSON output = LiquidctlCLIWrapper.ReadStatus(deviceDescription).First();
                 UpdateFromJSON(output);
             }
             catch (InvalidOperationException)
             {
-                throw new Exception($"Device {address} not showing up");
+                throw new Exception($"Device {deviceDescription} (address {address}) not showing up");
             }
         }
     }
